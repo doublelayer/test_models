@@ -33,6 +33,9 @@ parser.add_argument('--menx_xelem', help='Elements around metal, default O', def
 parser.add_argument('--pyridine', help='Change linker to pyridine type', action='store_true')
 parser.add_argument('--halfaq', help='Change linker to half-antroquinone', action='store_true')
 parser.add_argument('--aq', help='Change linker to antroquinone', action='store_true')
+
+parser.add_argument('--nlayer', type=int, help='If >1 write slab instead of single layer; uses vac_z as spacing',
+                    default = 1)
 args=parser.parse_args()
 
 # Fragment bases and default associated data
@@ -46,7 +49,7 @@ for atom in ligand:
 mof = mexn+ligand
 mof.pbc = [1, 1, 1]
 vacuum = 14
-mof.cell = [cell_len_xdir+args.x_stretch,5+args.vac_y,args.vac_z]
+mof.cell = [cell_len_xdir+args.x_stretch,5+args.vac_y,args.vac_z*args.nlayer]
 
 # Change metal center as specified in arguments
 mof[0].symbol = args.metal
@@ -70,6 +73,14 @@ if args.aq:
 if args.pyridine:
     mof[15].symbol = 'N'
     del mof[23]
+
+if args.nlayer > 1:
+    mof_base = mof.copy()
+    for i in range(args.nlayer):
+        mof_2 = mof_base.copy()
+        for atom in mof_2:
+            atom.position += [0, 0, i*args.vac_z]
+        mof += mof_2
 
 mof.center()
 
